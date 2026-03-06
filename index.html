@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#020608">
+  <title>SENTINEL — Global Conflict Monitor</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- TOP BAR -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="logo-block">
+        <span class="logo-icon">◈</span>
+        <span class="logo-text">SENTINEL</span>
+        <span class="logo-sub">GLOBAL CONFLICT INTELLIGENCE SYSTEM</span>
+      </div>
+    </div>
+    <div class="topbar-center">
+      <div class="status-indicators">
+        <div class="status-item"><span class="dot dot-red pulse"></span><span class="label">ACTIVE: </span><strong id="stat-active">0</strong></div>
+        <div class="status-item"><span class="dot dot-orange"></span><span class="label">MEDIUM: </span><strong id="stat-medium">0</strong></div>
+        <div class="status-item"><span class="dot dot-yellow"></span><span class="label">TOTAL: </span><strong id="stat-low">0</strong></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="clock-block">
+        <div class="clock-label">UTC</div>
+        <div class="clock" id="utc-clock">--:--:--</div>
+        <div class="date" id="utc-date">-- --- ----</div>
+      </div>
+      <div class="classification">⚠ DEMO ONLY</div>
+    </div>
+  </header>
+
+  <!-- MAIN LAYOUT (map + panels) -->
+  <div class="main-layout">
+
+    <!-- LEFT PANEL (Layers / Controls) -->
+    <aside class="left-panel" id="panel-layers">
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">▣</span> LAYER CONTROLS</div>
+        <div class="layer-controls">
+          <label class="layer-toggle" data-type="war">
+            <input type="checkbox" checked data-layer="war"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">⚔</span>
+            <span class="toggle-label">MILITARY WARS</span>
+            <span class="toggle-count" id="count-war">0</span>
+          </label>
+          <label class="layer-toggle" data-type="civil">
+            <input type="checkbox" checked data-layer="civil"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">🔥</span>
+            <span class="toggle-label">CIVIL WARS</span>
+            <span class="toggle-count" id="count-civil">0</span>
+          </label>
+          <label class="layer-toggle" data-type="terrorism">
+            <input type="checkbox" checked data-layer="terrorism"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">💥</span>
+            <span class="toggle-label">TERRORISM</span>
+            <span class="toggle-count" id="count-terrorism">0</span>
+          </label>
+          <label class="layer-toggle" data-type="insurgency">
+            <input type="checkbox" checked data-layer="insurgency"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">⚡</span>
+            <span class="toggle-label">INSURGENCIES</span>
+            <span class="toggle-count" id="count-insurgency">0</span>
+          </label>
+          <label class="layer-toggle" data-type="cartel">
+            <input type="checkbox" checked data-layer="cartel"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">💊</span>
+            <span class="toggle-label">DRUG CARTELS</span>
+            <span class="toggle-count" id="count-cartel">0</span>
+          </label>
+          <label class="layer-toggle" data-type="gang">
+            <input type="checkbox" checked data-layer="gang"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">🔫</span>
+            <span class="toggle-label">GANG VIOLENCE</span>
+            <span class="toggle-count" id="count-gang">0</span>
+          </label>
+          <label class="layer-toggle" data-type="piracy">
+            <input type="checkbox" checked data-layer="piracy"/>
+            <span class="toggle-box"></span>
+            <span class="toggle-icon">☠</span>
+            <span class="toggle-label">PIRACY ZONES</span>
+            <span class="toggle-count" id="count-piracy">0</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">◉</span> INTENSITY FILTER</div>
+        <div class="intensity-filters">
+          <label class="intensity-toggle">
+            <input type="checkbox" checked data-intensity="high"/>
+            <span class="int-box int-high"></span>
+            <span>HIGH INTENSITY</span>
+          </label>
+          <label class="intensity-toggle">
+            <input type="checkbox" checked data-intensity="medium"/>
+            <span class="int-box int-medium"></span>
+            <span>MEDIUM INTENSITY</span>
+          </label>
+          <label class="intensity-toggle">
+            <input type="checkbox" checked data-intensity="low"/>
+            <span class="int-box int-low"></span>
+            <span>LOW INTENSITY</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">◈</span> LEGEND</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#ff2d2d;box-shadow:0 0 8px #ff2d2d"></span> HIGH — Active Combat</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ff8c00;box-shadow:0 0 8px #ff8c00"></span> MEDIUM — Ongoing Conflict</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#ffd700;box-shadow:0 0 8px #ffd700"></span> LOW — Monitored Zone</div>
+          <div class="legend-divider"></div>
+          <div class="legend-item"><span class="legend-shape circle"></span> Incident Point</div>
+          <div class="legend-item"><span class="legend-shape polygon"></span> Controlled Territory</div>
+          <div class="legend-item"><span class="legend-shape line"></span> Front Line</div>
+        </div>
+      </div>
+
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">▲</span> THREAT INDEX</div>
+        <div class="threat-index">
+          <div class="threat-bar-label">GLOBAL THREAT LEVEL</div>
+          <div class="threat-bar-wrap">
+            <div class="threat-bar" id="threat-bar"></div>
+          </div>
+          <div class="threat-level-text" id="threat-level-text">ELEVATED</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAP CONTAINER -->
+    <div class="map-wrapper mobile-active" id="panel-map">
+      <div id="map"></div>
+      <div class="map-overlay-grid"></div>
+      <div class="scanline"></div>
+      <div class="map-search">
+        <span class="search-icon">⌕</span>
+        <input type="text" id="search-input" placeholder="SEARCH CONFLICT, REGION, ACTOR..." />
+        <div class="search-results" id="search-results"></div>
+      </div>
+      <div class="corner corner-tl"></div>
+      <div class="corner corner-tr"></div>
+      <div class="corner corner-bl"></div>
+      <div class="corner corner-br"></div>
+      <div class="coords-display" id="coords-display">LAT: -- | LON: --</div>
+    </div>
+
+    <!-- RIGHT PANEL (Intel) -->
+    <aside class="right-panel" id="panel-intel">
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">◉</span> ACTIVE ALERTS</div>
+        <div class="alerts-feed" id="alerts-feed"></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">▣</span> REGIONAL BREAKDOWN</div>
+        <div class="regional-stats" id="regional-stats"></div>
+      </div>
+      <div class="panel-section">
+        <div class="panel-title"><span class="title-icon">◈</span> CONFLICT TIMELINE</div>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </aside>
+
+    <!-- MOBILE BOTTOM NAV -->
+    <nav class="mobile-nav">
+      <button class="mobile-nav-btn" id="nav-layers" onclick="switchTab('layers')">
+        <span class="nav-icon">⚙</span>
+        <span class="nav-label">LAYERS</span>
+      </button>
+      <button class="mobile-nav-btn active" id="nav-map" onclick="switchTab('map')">
+        <span class="nav-icon">🗺</span>
+        <span class="nav-label">MAP</span>
+      </button>
+      <button class="mobile-nav-btn" id="nav-intel" onclick="switchTab('intel')">
+        <span class="nav-icon">📡</span>
+        <span class="nav-label">INTEL</span>
+      </button>
+    </nav>
+
+  </div><!-- /.main-layout -->
+
+  <!-- DETAIL POPUP -->
+  <div class="detail-popup hidden" id="detail-popup">
+    <div class="popup-header">
+      <div class="popup-title-block">
+        <span class="popup-type-badge" id="popup-type-badge">WAR</span>
+        <span class="popup-intensity-badge" id="popup-intensity-badge">HIGH</span>
+      </div>
+      <button class="popup-close" id="popup-close">✕</button>
+    </div>
+    <div class="popup-body">
+      <h2 class="popup-name" id="popup-name">Conflict Name</h2>
+      <div class="popup-location" id="popup-location">Country · Region</div>
+      <div class="popup-grid">
+        <div class="popup-stat">
+          <div class="popup-stat-label">FIGHTERS EST.</div>
+          <div class="popup-stat-value" id="popup-fighters">—</div>
+        </div>
+        <div class="popup-stat">
+          <div class="popup-stat-label">CASUALTIES EST.</div>
+          <div class="popup-stat-value" id="popup-casualties">—</div>
+        </div>
+        <div class="popup-stat">
+          <div class="popup-stat-label">START DATE</div>
+          <div class="popup-stat-value" id="popup-start">—</div>
+        </div>
+        <div class="popup-stat">
+          <div class="popup-stat-label">STATUS</div>
+          <div class="popup-stat-value" id="popup-status">—</div>
+        </div>
+      </div>
+      <div class="popup-section">
+        <div class="popup-section-label">ACTORS INVOLVED</div>
+        <div class="popup-actors" id="popup-actors"></div>
+      </div>
+      <div class="popup-section">
+        <div class="popup-section-label">RECENT EVENTS</div>
+        <div class="popup-events" id="popup-events"></div>
+      </div>
+      <div class="popup-section">
+        <div class="popup-section-label">INTELLIGENCE SUMMARY</div>
+        <div class="popup-summary" id="popup-summary"></div>
+      </div>
+      <div class="popup-links" id="popup-links"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM STATUS BAR -->
+  <footer class="statusbar">
+    <span>SENTINEL v3.1.4</span>
+    <span class="sep">|</span>
+    <span id="status-msg" class="status-msg">SYSTEM NOMINAL — ALL SENSORS ACTIVE</span>
+    <span class="sep">|</span>
+    <span>⚠ DEMO ONLY</span>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
